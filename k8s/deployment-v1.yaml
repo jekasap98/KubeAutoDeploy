@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: html-service-v1
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: html-service
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: html-service
+        version: v1
+    spec:
+      containers:
+        - name: html-service
+          image: hashicorp/http-echo
+          args:
+            - "-text=Lok-tar ogar! Version 1"
+          ports:
+            - containerPort: 5678

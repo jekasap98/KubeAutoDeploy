@@ -1,0 +1,88 @@
+---
+- name: Setup Jenkins Master and Agent
+  hosts: all
+  become: yes
+  vars:
+    jenkins_url: "http://your_jenkins_url"
+
+  tasks:
+    - name: Update and upgrade apt packages
+      apt:
+        update_cache: yes
+        upgrade: dist
+
+    - name: Install Java
+      apt:
+        name: openjdk-11-jdk
+        state: present
+
+    - name: Add Jenkins repository key (master only)
+      when: "'jenkins_master' in group_names"
+      apt_key:
+        url: https://pkg.jenkins.io/debian-stable/jenkins.io.key
+        state: present
+
+    - name: Add Jenkins repository (master only)
+      when: "'jenkins_master' in group_names"
+      apt_repository:
+        repo: 'deb http://pkg.jenkins.io/debian-stable binary/'
+        state: present
+
+    - name: Install Jenkins (master only)
+      when: "'jenkins_master' in group_names"
+      apt:
+        name: jenkins
+        state: present
+        update_cache: yes
+
+    - name: Start Jenkins service (master only)
+      when: "'jenkins_master' in group_names"
+      service:
+        name: jenkins
+        state: started
+        enabled: true
+
+    - name: Get Jenkins initial admin password (master only)
+      when: "'jenkins_master' in group_names"
+      become: true
+      shell: cat /var/lib/jenkins/secrets/initialAdminPassword
+      register: jenkins_admin_password
+      no_log: true
+
+    - name: Install Python3 pip (master only)
+      when: "'jenkins_master' in group_names"
+      apt:
+        name: python3-pip
+        state: present
+
+    - name: Install required Python libraries (master only)
+      when: "'jenkins_master' in group_names"
+      pip:
+        name: requests
+        executable: pip3
+
+    - name: Create Jenkins agent node (master only)
+      when: "'jenkins_master' in group_names"
+      uri:
+        url: "{{ jenkins_url }}/computer/doCreateItem?name=agent&mode=EXCLUSIVE"
+        method: POST
+        user: admin
+        password: "{{ jenkins_admin_password.stdout }}"
+        body: "{{ lookup('template', 'node_config.json.j2') }}"
+        status_code: 200
+
+    - name: Download Jenkins agent jar (agent only)
+      when: "'jenkins_agent' in group_names"
+      retries: 5
+      delay: 15
+      get_url:
+        url: "{{ jenkins_url }}/jnlpJars/agent.jar"
+        dest: /home/ubuntu/agent.jar
+      register: download_jar
+      until: download_jar is succeeded
+
+    - name: Start Jenkins agent (agent only)
+      when: "'jenkins_agent' in group_names"
+      shell: nohup java -jar agent.jar -url {{ jenkins_url }} -secret your_secret -name Agent -workDir "/path" &
+      async: 30
+      poll: 0

@@ -1,0 +1,21 @@
+{
+  "name": "agent",
+  "nodeDescription": "Jenkins Agent Node",
+  "numExecutors": 2,
+  "remoteFS": "/home/ubuntu",
+  "labelString": "agent",
+  "mode": "EXCLUSIVE",
+  "retentionStrategy": {
+    "stapler-class": "hudson.slaves.RetentionStrategy$Always"
+  },
+  "type": "hudson.slaves.DumbSlave$DescriptorImpl",
+  "nodeProperties": [],
+  "launcher": {
+    "stapler-class": "hudson.slaves.JNLPLauncher",
+    "workDirSettings": {
+      "disabled": false,
+      "internalDir": "remoting",
+      "failIfWorkDirIsMissing": false
+    }
+  }
+}

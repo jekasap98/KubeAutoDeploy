@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: html-service-v2
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: html-service
+      version: v2
+  template:
+    metadata:
+      labels:
+        app: html-service
+        version: v2
+    spec:
+      containers:
+        - name: html-service
+          image: hashicorp/http-echo
+          args:
+            - "-text=I am the Lich King. And I am not afraid. Version 2"
+          ports:
+            - containerPort: 5678

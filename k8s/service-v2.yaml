@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: html-service-v2
+spec:
+  selector:
+    app: html-service
+    version: v2
+  ports:
+    - port: 80
+      targetPort: 5678
