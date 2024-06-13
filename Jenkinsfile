@@ -2,6 +2,15 @@ pipeline {
     agent none
     
     stages {
+        stage('Lint Python Code') {
+            agent {
+                label 'docker'
+            }
+            steps {
+                sh 'pip install pylint' 
+                sh 'export PATH=$HOME/.local/bin:$PATH && pylint bot.py || true'  
+              }  
+        
         stage('Build Docker Image') {
             agent {
                 label 'Build_agent'
@@ -11,6 +20,7 @@ pipeline {
                 sh "docker build -t ${DOCKER_IMAGE_NAME} ." 
             }
         }
+
         stage('Push Docker Image') {
             agent {
                 label 'Build_agent'
@@ -34,6 +44,8 @@ pipeline {
                             gcloud container clusters get-credentials ${E_CLUSTER_NAME} \
                                 --region=${E_REGION_NAME} --project=${E_PROJECT_NAME}
                             kubectl get namespaces
+                            sed -i 's#image: ${DOCKER_IMAGE_NAME}#image: ${DOCKER_IMAGE_NAME}:${GIT_COMMIT}#' k8s/mybot.yaml
+                            sed -i 's|name: telegram-bot|name: telegram-bot-${GIT_COMMIT}|' k8s/mybot.yaml
                             kubectl apply -f k8s/mybot.yaml
                             kubectl apply -f k8s/deployment-v1.yaml
                             kubectl apply -f k8s/deployment-v2.yaml
