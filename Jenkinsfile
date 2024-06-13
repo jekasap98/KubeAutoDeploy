@@ -3,6 +3,9 @@ pipeline {
     
     stages {
         stage('Lint Python Code') {
+            when {
+                branch 'main' || branch 'dev'
+            }
             agent {
                 label 'docker'
             }
@@ -10,8 +13,11 @@ pipeline {
                 sh 'pip install pylint' 
                 sh 'export PATH=$HOME/.local/bin:$PATH && pylint bot.py || true'  
               }  
-        
+        }
         stage('Build Docker Image') {
+            when {
+                branch 'main' || branch 'dev'
+            }
             agent {
                 label 'Build_agent'
             }
@@ -22,6 +28,9 @@ pipeline {
         }
 
         stage('Push Docker Image') {
+            when {
+                branch 'main' || branch 'dev'
+            }
             agent {
                 label 'Build_agent'
             }
@@ -32,6 +41,9 @@ pipeline {
         }
         
          stage('Push into k8s') {
+            when {
+                branch 'main'
+            }
             agent {
                 label 'Deploy_agent'
             }
